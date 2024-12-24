@@ -1,11 +1,11 @@
 <?php 
 
-namespace Public\Modules\<pluginName>;
+namespace Public\Modules\propertyListing;
 
 use EvoPhp\Api\Controllers;
 use EvoPhp\Api\Config;
 
-class <pluginPrefix>Controller extends Controllers
+class PLIController extends Controllers
 {
 
     public function __construct()
