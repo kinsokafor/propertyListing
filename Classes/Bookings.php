@@ -28,7 +28,6 @@ final class Bookings
             status ENUM('pending', 'approved', 'declined') DEFAULT 'pending',
             start_date DATE NOT NULL,
             end_date DATE NOT NULL,
-            meta JSON NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (apartment_id) REFERENCES apartments(id),
             FOREIGN KEY (user_id) REFERENCES users(id),

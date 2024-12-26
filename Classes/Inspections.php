@@ -27,7 +27,6 @@ final class Inspections
             user_id INT NOT NULL,
             inspection_date DATE NOT NULL,
             status ENUM('pending', 'approved', 'cancelled') DEFAULT 'pending',
-            meta JSON NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (property_id) REFERENCES properties(id),
             FOREIGN KEY (user_id) REFERENCES users(id),
