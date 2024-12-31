@@ -24,7 +24,7 @@ final class Inspections
         $statement = "CREATE TABLE inspections (
             id INT AUTO_INCREMENT PRIMARY KEY,
             property_id INT NOT NULL,
-            user_id INT NOT NULL,
+            user_id BIGINT(20) UNSIGNED NOT NULL,
             inspection_date DATE NOT NULL,
             status ENUM('pending', 'approved', 'cancelled') DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

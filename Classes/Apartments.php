@@ -26,7 +26,7 @@ final class Apartments
 
         $statement = "CREATE TABLE apartments (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            owner_id INT NOT NULL,
+            owner_id BIGINT(20) UNSIGNED NOT NULL,
             name VARCHAR(255) NOT NULL,
             description TEXT,
             location VARCHAR(255) NOT NULL,

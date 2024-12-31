@@ -26,7 +26,7 @@ final class Properties
 
         $statement = "CREATE TABLE properties (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            owner_id INT NOT NULL,
+            owner_id BIGINT(20) UNSIGNED NOT NULL,
             title VARCHAR(255) NOT NULL,
             description TEXT,
             location VARCHAR(255) NOT NULL,
