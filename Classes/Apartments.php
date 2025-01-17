@@ -62,7 +62,7 @@ final class Apartments
             }
         }
 
-        $id = $self->dbTable->insert("apartments", "", [
+        $id = $self->dbTable->insert("apartments", "isssds", [
             "owner_id" => (int) $owner->user_id ?? 0,
             "name" => substr($name ?? "", 0, 255),
             "description" => $description ?? "",
