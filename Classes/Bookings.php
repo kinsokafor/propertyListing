@@ -2,6 +2,7 @@
 
 namespace Public\Modules\propertyListing\Classes;
 
+use EvoPhp\Api\Operations;
 use EvoPhp\Resources\DbTable;
 use EvoPhp\Database\Session;
 
@@ -44,80 +45,86 @@ final class Bookings
         $self = new self;
 
         $statement = "WITH RECURSIVE unavailable_dates AS (
-                SELECT start_date AS unavailable_date
-                FROM bookings
-                WHERE status != 'declined'
-                AND apartment_id = ? -- Replace 123 with the desired apartment_id
-                AND (
-                    start_date <= ? -- End of your desired range
-                    AND end_date >= ? -- Start of your desired range
-                )
-                UNION ALL
-                SELECT DATE_ADD(unavailable_date, INTERVAL 1 DAY)
-                FROM unavailable_dates
-                JOIN bookings 
-                ON unavailable_dates.unavailable_date < bookings.end_date
-                AND bookings.apartment_id = ? -- Same apartment_id condition
-                WHERE bookings.status != 'declined'
-                AND (
-                    bookings.start_date <= ?
-                    AND bookings.end_date >= ?
-                )
+            -- Step 1: Select the initial set of unavailable dates from bookings
+            SELECT start_date AS unavailable_date, end_date
+            FROM bookings
+            WHERE status != 'declined'
+            AND apartment_id = ?
+            AND (
+                start_date <= ? -- End of desired range
+                AND end_date >= ? -- Start of desired range
             )
-            SELECT DISTINCT unavailable_date
+            UNION ALL
+            -- Step 2: Generate subsequent dates for each booking's range
+            SELECT DATE_ADD(unavailable_date, INTERVAL 1 DAY), end_date
             FROM unavailable_dates
-            ORDER BY unavailable_date;";
+            WHERE DATE_ADD(unavailable_date, INTERVAL 1 DAY) < end_date
+        )
+        SELECT DISTINCT unavailable_date
+        FROM unavailable_dates
+        ORDER BY unavailable_date;
+    ";
 
-        return $self->dbTable->query($statement, "ississ", $apartmentId, $endDate, $startDate, $apartmentId, $endDate, $startDate)->execute()->rows();
+        // Execute the query with parameterized values
+        return $self->dbTable
+            ->query($statement, "iss", $apartmentId, $endDate, $startDate)
+            ->execute()
+            ->rows();
     }
+
+
 
     public static function unavailableDatesCount($apartmentId, $startDate, $endDate)
     {
         $self = new self;
 
         $statement = "WITH RECURSIVE unavailable_dates AS (
-                SELECT start_date AS unavailable_date
+                -- Step 1: Select the initial set of unavailable dates from bookings
+                SELECT start_date AS unavailable_date, end_date
                 FROM bookings
                 WHERE status != 'declined'
-                AND apartment_id = ? -- Replace 123 with the desired apartment_id
+                AND apartment_id = ?
                 AND (
-                    start_date <= ? -- End of your desired range
-                    AND end_date >= ? -- Start of your desired range
+                    start_date <= ? -- End of desired range
+                    AND end_date >= ? -- Start of desired range
                 )
                 UNION ALL
-                SELECT DATE_ADD(unavailable_date, INTERVAL 1 DAY)
+                -- Step 2: Generate subsequent dates for each booking's range
+                SELECT DATE_ADD(unavailable_date, INTERVAL 1 DAY), end_date
                 FROM unavailable_dates
-                JOIN bookings 
-                ON unavailable_dates.unavailable_date < bookings.end_date
-                AND bookings.apartment_id = ? -- Same apartment_id condition
-                WHERE bookings.status != 'declined'
-                AND (
-                    bookings.start_date <= ?
-                    AND bookings.end_date >= ?
-                )
+                WHERE DATE_ADD(unavailable_date, INTERVAL 1 DAY) <= end_date
             )
             SELECT DISTINCT COUNT(unavailable_date) as count
             FROM unavailable_dates
             ORDER BY unavailable_date;";
 
-        return $self->dbTable->query($statement, "ississ", $apartmentId, $endDate, $startDate, $apartmentId, $endDate, $startDate)->execute()->row()->count;
+        return $self->dbTable->query($statement, "iss", $apartmentId, $endDate, $startDate)->execute()->row()->count;
     }
 
-    public static function new($data) {
+    public static function new($data)
+    {
         extract($data);
 
         $session = Session::getInstance();
 
-        if(!($user_id = $session->getResourceOwner())) {
+        if (!($user = $session->getResourceOwner())) {
             http_response_code(401);
             return "User not logged in";
         }
 
+        $user_id = $user->user_id;
+
         $self = new self;
 
-        if($self::unavailableDatesCount($apartment_id, $start_date, $end_date) > 0) {
+        if ($self::unavailableDatesCount($apartment_id, $start_date, $end_date) > 0) {
             http_response_code(400);
-            return $self::unavailableDates($apartment_id, $start_date, $end_date);
+            $unavailableDates = $self::unavailableDates($apartment_id, $start_date, $end_date);
+            $dates = implode(", ", array_map(function ($v) {
+                return $v->unavailable_date;
+            }, $unavailableDates));
+            return (Operations::count($unavailableDates) > 1) ?
+                "The following dates in your selection are not available: $dates" :
+                "$dates is not available.";
         }
 
         $id = $self->dbTable->insert("bookings", "iiss", [
