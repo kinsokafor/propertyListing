@@ -81,6 +81,8 @@ final class Views
         $user = $session->getResourceOwner();
 
         $user_id = $user ? $user->user_id : null;
+
+        $session_id = \session_id();
         
         $self = new self;
 

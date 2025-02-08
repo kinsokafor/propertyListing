@@ -4,8 +4,11 @@ use Public\Modules\propertyListing\PLIController;
 use EvoPhp\Api\Requests\Requests;
 
 //API End points
+include_once("Routes/Accounts.php");
 include_once("Routes/Properties.php");
 include_once("Routes/Apartments.php");
+include_once("Routes/Views.php");
+include_once("Routes/Reviews.php");
 //Pages
 
 $router->get('/secured', function($params){

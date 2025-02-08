@@ -41,6 +41,79 @@ final class Reviews
     private function maintainTable() {}
 
     public static function new($data) {
-        
+        extract($data);
+
+        $session = Session::getInstance();
+
+        $user = $session->getResourceOwner();
+
+        if(!$user) return false;
+
+        $user_id = $user->user_id;
+
+        if($id = self::exists($data)) {
+            return self::update($id, $data);
+        }
+
+        $self = new self;
+
+        $values = [
+            "content_type" => $content_type,
+            "content_id" => (int) $content_id,
+            "user_id" => $user_id,
+            "rating" => (int) $rating,
+            "comment" => $comment
+        ];
+
+        $id = $self->dbTable->insert("reviews", "siiis", $values)->execute();
+
+        return $self->dbTable->select("reviews")
+            ->where("id", $id)->execute()->row();
+    }
+
+    public static function update($id, $data) {
+        extract($data);
+
+        $self = new self;
+
+        $self->dbTable->update("reviews")
+            ->set("comment", $comment, "s")
+            ->set("rating", (int) $rating, "i")
+            ->where("id", $id, "i")
+            ->execute();
+
+        return $self->dbTable->select("reviews")
+            ->where("id", $id)->execute()->row();
+    }
+
+    public static function exists($data) {
+        extract($data);
+
+        $session = Session::getInstance();
+
+        $user = $session->getResourceOwner();
+
+        if(!$user) return false;
+
+        $user_id = $user->user_id;
+
+        $self = new self;
+
+        $statement = "
+            SELECT id 
+            FROM reviews 
+            WHERE content_type = ? 
+            AND content_id = ? 
+            AND (user_id = ?)
+        ";
+
+        $res = $self->dbTable->query(
+            $statement, 
+            "sii", 
+            $content_type, 
+            (int) $content_id,
+            $user_id)->execute()->row();
+
+        return $res == NULL ? false : $res->id;
     }
 }
