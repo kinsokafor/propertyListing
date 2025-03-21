@@ -62,7 +62,7 @@ final class Properties
             }
         }
 
-        $id = $self->dbTable->insert("properties", "", [
+        $id = $self->dbTable->insert("properties", "isssds", [
             "owner_id" => (int) $owner->user_id ?? 0,
             "title" => substr($title ?? "", 0, 255),
             "description" => $description ?? "",

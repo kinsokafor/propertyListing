@@ -31,6 +31,7 @@ final class Bookings
             start_date DATE NOT NULL,
             end_date DATE NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (apartment_id) REFERENCES apartments(id),
             FOREIGN KEY (user_id) REFERENCES users(id),
             INDEX (apartment_id)
