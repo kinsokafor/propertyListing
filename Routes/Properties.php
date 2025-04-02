@@ -18,14 +18,37 @@ $router->group('/listing-api/properties', function() use ($router) {
         });
     });
 
-    // $router->post('/book', function(){
-    //     $data = (array) json_decode(file_get_contents('php://input'));
-    //     $request = new Requests;
-    //     $request->evoAction()->auth(1,15,14,16,13,6,7,8)->execute(function() use ($data){
-    //         return \Public\Modules\propertyListing\Classes\Bookings::new($data);
-    //     });
-    // });
+    $router->post('/book-inspection', function(){
+        $data = (array) json_decode(file_get_contents('php://input'));
+        $request = new Requests;
+        $request->evoAction()->auth(1,15,14,16,13,6,7,8)->execute(function() use ($data){
+            return \Public\Modules\propertyListing\Classes\Inspections::new($data);
+        });
+    });
 
+    $router->post('/get/inspections', function(){
+        $data = (array) json_decode(file_get_contents('php://input'));
+        $request = new Requests;
+        $request->evoAction()->auth(1,15,14,16)->execute(function() use ($data){
+            return \Public\Modules\propertyListing\Classes\Inspections::getByOwner($data, "all");
+        });
+    });
+
+    $router->post('/get/unscheduled-inspections', function(){
+        $data = (array) json_decode(file_get_contents('php://input'));
+        $request = new Requests;
+        $request->evoAction()->auth(1,15,14,16)->execute(function() use ($data){
+            return \Public\Modules\propertyListing\Classes\Inspections::getByOwner($data, "unscheduled");
+        });
+    });
+
+    $router->post('/get/scheduled-inspections', function(){
+        $data = (array) json_decode(file_get_contents('php://input'));
+        $request = new Requests;
+        $request->evoAction()->auth(1,15,14,16)->execute(function() use ($data){
+            return \Public\Modules\propertyListing\Classes\Inspections::getByOwner($data, "scheduled");
+        });
+    });
     // $router->post('/unavailable-dates', function(){
     //     $data = (array) json_decode(file_get_contents('php://input'));
     //     $request = new Requests;

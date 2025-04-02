@@ -39,11 +39,10 @@ final class Inspections
             INDEX (schedule_id)
         )";
         $self->dbTable->query($statement)->execute();
-
     }
 
     private function maintainTable() {}
-    
+
     public static function new($data)
     {
         extract($data);
@@ -65,8 +64,7 @@ final class Inspections
 
         $self = new self;
 
-        $property = $self->dbTable->merge($self->dbTable->
-            select("properties")->where("id", (int) $property_id)
+        $property = $self->dbTable->merge($self->dbTable->select("properties")->where("id", (int) $property_id)
             ->execute()->row());
 
         return Invoice::new([
@@ -77,11 +75,11 @@ final class Inspections
             "user_id" => (int) $user_id,
             "meta" => $meta
         ]);
-        
     }
 
-    public static function onPaid($meta) {
-        extract($meta);
+    public static function onPaid($meta)
+    {
+        extract((array) $meta);
 
         $self = new self;
 
@@ -95,7 +93,7 @@ final class Inspections
 
         $schedule = Schedules::available($property_id, $inspection_date);
 
-        if($schedule !== null) {
+        if ($schedule !== null) {
             $ins["schedule_id"] = (int) $schedule->id;
             $ins["status"] = "approved";
             $types .= "is";
@@ -103,8 +101,50 @@ final class Inspections
 
         $id = $self->dbTable->insert("inspections", $types, $ins)->execute();
 
-        return $self->dbTable->select("inspections")
-            ->where("id", $id)
-            ->execute()->row();
+        return true;
+    }
+
+    public static function getByOwner($data, $status = "all")
+    {
+        extract($data); 
+
+        $session = Session::getInstance();
+
+        if (!($user = $session->getResourceOwner())) {
+            http_response_code(401);
+            return "User not logged in";
+        }
+
+        $user_id = (int) $user->user_id;
+
+        $sql = "SELECT 
+            inspections.id, 
+            inspections.property_id, 
+            properties.title,
+            inspections.user_id, 
+            inspections.schedule_id, 
+            inspections.inspection_date, 
+            inspections.status, 
+            inspections.created_at, 
+            inspections.updated_at
+        FROM properties 
+        RIGHT JOIN inspections ON properties.id = inspections.property_id
+        WHERE properties.owner_id = ?";
+
+        if($status === "scheduled") {
+            $sql .= " AND inspections.schedule_id IS NOT NULL";
+        }
+        
+        if($status === "unscheduled") {
+            $sql .= " AND inspections.schedule_id IS NULL";
+        }
+
+        $sql .= " LIMIT ? OFFSET ?";
+
+        $dbTable = new DbTable();
+
+        $q = $dbTable->query($sql, "iii", $user_id, $limit ?? 100, $offset ?? 0);
+
+        return $q->execute()->rows();
     }
 }
